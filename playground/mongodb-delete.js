@@ -25,7 +25,9 @@
 /// call connect() to connect to the database. We create a database we will name as TodoApp
 /// in the callback function, we have err if there was an error during the dBase connection,
 /// else err will not exist if connection succeeded; else we process the db object we can use to
-/// read and write data
+/// read and write
+
+
 MongoClient.connect('mongodb://localhost:27017/TodoApp', (err, db) => {
     if (err) {
         return console.log('Unable to connect to MongoDB server');
@@ -33,37 +35,39 @@ MongoClient.connect('mongodb://localhost:27017/TodoApp', (err, db) => {
 
     console.log('Connected to mongoDB Server');
 
-    // db.collection('Todos').find({}, (err, result) => {
-    //     if (err) {
-    //         return console.log('Unable to get data from the DataBase', err);
-    //     }
-    //
-    //     console.log(JSON.stringify(result.ops, undefined, 2));
-    // });
+    // /// Use deleteMany() to delete all documents having text="Eat lunch"
+    // db.collection('Todos').deleteMany({text: 'Eat lunch'})
+    //   .then( (result) => {
+    //       console.log(`${result.result.n} document(s) removed from the dBase: `);
+    //   })
+    //   .catch ( (err) => {
+    //       console.log('Error accessing dBase: ', err);
+    //   });
 
 
-    /// using methods such as toArray() specified in http://mongodb.github.io/node-mongodb-native/2.2/api/
-    //db.collection('Todos').find({completed: false}).toArray().then ( (docs) => {
-    db.collection('Todos').find({_id: new ObjectID('595200b74ca92832c64042a0')}).toArray().then ( (docs) => {
-        //console.log(JSON.stringify(docs, undefined, 2));
-        console.log(docs);
-    }). catch ( (err) => {
-        console.log('Unable to fetch Todos: ', err);
-    });
+      // /// Use deleteOne() to delete the first document to fit the query criteria. It deletes the
+      // ///  first document, then it stops
+      // db.collection('Todos').deleteOne({text:'Eat lunch'})
+      //   .then ( (result) => {
+      //       console.log(`${result.result.n} document(s) removed from the dBase`);
+      //
+      //   })
+      //   .catch ( (err) => {
+      //       console.log('Error accessing dBase: ', err);
+      //   });
 
-    /// Give number of users located in Brisbane
-    db.collection('Users').find({location: 'Brisbane'}).count().then ( (data) => {
-          console.log("\nTotal users living in Brisbane is ", data);
-    }).catch ( (err) => {
-          console.log('Unable to fetch Users: ', err);
-    })
 
-    /// Give listing of users living in Brisbane
-    db.collection('Users').find({location: "Brisbane"}).toArray().then ( (docs) => {
-        console.log(JSON.stringify(docs, undefined, 2));
-    }). catch ( (err) => {
-        console.log('Unable to fetch Users: ', err);
-    })
+      /// Use findOneAndDelete(), actually gets the document back.
+      ///   example using it to delete a document when we know its id
+      db.collection('Todos').findOneAndDelete({_id: new ObjectID('5953273acf56eab9c94eaa9d')})
+        .then ( (result) => {
+            //console.log( `Document id: ${result.value._id} removed`);
+            console.log( "removed Document details: ", JSON.stringify(result.value, undefined, 2));
+        })
+        .catch ( (err) => {
+            console.log(`Unable to connect to dBase: ${err}`);
+        });
+
 
 
 
