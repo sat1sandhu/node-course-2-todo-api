@@ -1,11 +1,12 @@
 /// server.js is now only going to be responsible for our routes
 
-var express     = require('express');
-var bodyParser  = require('body-parser');
+var express      = require('express');
+var bodyParser   = require('body-parser');
 
+const {ObjectID} = require('mongodb');
 
 /// Using ES6 destructuring to get from the mongoose object coming back from /db/mongoose.js
-var {mongoose} = require('./db/mongoose');
+var {mongoose}  = require('./db/mongoose');
 
 /// Using ES6 destructuring to get from the Todo object coming back from /db/todo.js
 var {Todo} = require('./models/todo');
@@ -46,6 +47,27 @@ app.get('/todos', (req, res) => {
       .catch ( (err) => {
           res.status(400).send(err);
       });
+});
+
+
+app.get('/todos/:id', (req,res) => {
+      var id = req.params.id;
+      if (!ObjectID.isValid(id)) {
+          return res.status(404).send();
+      }
+
+      Todo.findById(id)
+        .then ( (todo) => {
+            if (!todo) {
+                return res.status(404).send();
+            }
+
+            //res.send(JSON.stringify(todo, undefined, 2));
+            res.send({todo});
+        })
+        .catch ( (err) => {
+            res.status(400).send(err);
+        });
 });
 
 /// Call to listen to localhost ( a very basic server)
