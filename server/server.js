@@ -37,6 +37,17 @@ app.post('/todos', (req, res) => {
     });
 });
 
+
+app.get('/todos', (req, res) => {
+    Todo.find()
+      .then ( (docs) => {
+          res.send({docs});
+      })
+      .catch ( (err) => {
+          res.status(400).send(err);
+      });
+});
+
 /// Call to listen to localhost ( a very basic server)
 app.listen(3000, () => {
     console.log('Listening on port 3000');
