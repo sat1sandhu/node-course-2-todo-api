@@ -75,6 +75,30 @@ app.get('/todos/:id', (req,res) => {
         });
 });
 
+
+app.delete('/todos/:id', (req, res) => {
+      var id = req.params.id;
+      if (!ObjectID.isValid(id)) {
+          return res.status(404).send();
+      };
+
+      Todo.findByIdAndRemove(id)
+        .then ( (todo) => {
+            if (!todo) {
+                res.status(404).send();
+            }
+
+            /// The removed document
+            res.send({todo});
+        })
+        .catch ( (err) => {
+            res.status(400).send(err);
+        });
+});
+
+
+
+
 // /// Call to listen to localhost ( a very basic server)
 // app.listen(3000, () => {
 //     console.log('Listening on port 3000');
