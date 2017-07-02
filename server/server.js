@@ -18,6 +18,11 @@ var {User} = require('./models/user');
 /// create a var called app that stores the express application
 var app = express();
 
+/// Add for HEROKU deployment
+/// process.env.PORT will have a value if the app is running on Heroku; it will NOT be set if
+///   the app is running locally (on localhost). SO we add OR 3000
+const port = process.env.PORT || 3000;
+
 /// Middleware for bodyParser
 app.use(bodyParser.json());
 
@@ -70,9 +75,15 @@ app.get('/todos/:id', (req,res) => {
         });
 });
 
-/// Call to listen to localhost ( a very basic server)
-app.listen(3000, () => {
-    console.log('Listening on port 3000');
+// /// Call to listen to localhost ( a very basic server)
+// app.listen(3000, () => {
+//     console.log('Listening on port 3000');
+// })
+
+
+/// Call to listen to heroku or localhost ( a very basic server)
+app.listen(port, () => {
+    console.log(`Listening on port ${port}`);
 })
 
 module.exports = {

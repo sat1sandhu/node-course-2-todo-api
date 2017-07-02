@@ -4,8 +4,9 @@ var mongoose = require('mongoose');
 /// We want to use the built-in promise library as opposed to some 3rd party promise library
 mongoose.Promise = global.Promise;
 
-/// connect using mongoose
-mongoose.connect('mongodb://localhost:27017/TodoAppDB');
+/// connect to localhost using mongoose
+//mongoose.connect('mongodb://localhost:27017/TodoAppDB');
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/TodoAppDB');
 
 
 ///allows mongoose properties and methoods to be used in other files
