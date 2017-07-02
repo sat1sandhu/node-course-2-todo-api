@@ -1,3 +1,5 @@
+/// npm run test-watch
+
 const expect  = require('expect');
 const request = require('supertest');
 
@@ -130,7 +132,7 @@ describe ('GET /todos/:id', () => {
           request(app)
             .get(`/todos/${id}`)
             .expect(404)
-            .end(done)            
+            .end(done)
     });
 
 
@@ -140,8 +142,50 @@ describe ('GET /todos/:id', () => {
             .expect(404)
             .end(done)
     });
+});
 
 
 
+describe ('DELETE /todos/:id', () => {
+
+    it('Should remove todo document', (done) => {
+        var hexId = todos[0]._id.toHexString();
+        request(app)
+          .delete(`/todos/${hexId}`)
+          .expect(200)
+          .expect( (res) => {
+              expect(res.body.todo._id).toBe(hexId);
+          })
+          .end( (err, res) => {
+            if (err) {
+                return done(err);
+            }
+            /// Query dBase using id to confirm it has been removed
+            Todo.findById(hexId)
+              .then ( (todo) => {
+                  expect(todo).toNotExist();
+                  done();
+              })
+              .catch ( (err) => {
+                  done(err);
+              });
+          })
+    });
+
+
+    it('Should return 404 if todo not found', (done) => {
+        var id = new ObjectID().toHexString();
+        request(app)
+          .delete(`/todos/${id}`)
+          .expect(404)
+          .end(done);
+    });
+
+    it('Should return 404 for non-object ids', (done) => {
+        request(app)
+          .delete('/todos/123abc')
+          .expect(404)
+          .end(done);
+    });
 
 });
