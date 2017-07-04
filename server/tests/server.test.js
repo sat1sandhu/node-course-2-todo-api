@@ -24,7 +24,9 @@ const todos = [{
     text: "First test todos document"
 },{
     _id: new ObjectID(),
-    text: "Second test todos document"
+    text: "Second test todos document",
+    completed: true,
+    completedAt: 987654
 }];
 
 
@@ -189,3 +191,93 @@ describe ('DELETE /todos/:id', () => {
     });
 
 });
+
+
+
+describe('PATCH /todos/:id', () => {
+
+  it('Should clear completeAt when todo is not completed', (done) => {
+      var hexId = todos[1]._id.toHexString();
+      request(app)
+        .patch(`/todos/${hexId}`)
+        .send({"completed": false})
+        .expect(200)
+        .expect( (res) => {
+            expect(res.body.todo.completed).toBe(false);
+            expect(res.body.todo.comletedAt).toNotExist();
+        })
+        .end ( (err, res) => {
+              if (err) {
+                  return done(err);
+              }
+
+              Todo.findById(hexId)
+                .then ( (todo) => {
+                    expect(todo.completed).toBe(false);
+                    expect(todo.completedAt).toNotExist();
+                    done();
+                })
+                .catch ( (err) => {
+                    done(err);
+                });
+        });
+    });
+
+
+    it('Should update todo document', (done) => {
+        var hexId = todos[0]._id.toHexString();
+        request(app)
+          .patch(`/todos/${hexId}`)
+          .send({"completed": true})
+          .expect(200)
+          .expect( (res) => {
+            expect( res.body.todo.completed).toBe(true);
+          })
+          .end ( (err, res) => {
+              if (err) {
+                  return done(err);
+              }
+
+              Todo.findById(hexId)
+                .then ( (todo) => {
+                    expect(todo.completed).toBe(true);
+                    done();
+                })
+                .catch ( (err) => {
+                    done(err);
+                });
+          });
+      });
+
+
+      // it('Should clear completeAt when todo is not completed', (done) => {
+      //     var hexId = todos[1]._id.toHexString();
+      //     request(app)
+      //       .patch(`/todos/${hexId}`)
+      //       .send({"completed": false})
+      //       .expect(200)
+      //       .expect( (res) => {
+      //           expect(res.body.todo.completed).toBe(false);
+      //           expect(res.body.todo.comletedAt).toNotExist();
+      //       })
+      //       .end ( (err, res) => {
+      //             if (err) {
+      //                 return done(err);
+      //             }
+      //
+      //             Todo.findById(hexId)
+      //               .then ( (todo) => {
+      //                   expect(todo.completed).toBe(false);
+      //                   expect(todo.completedAt).toNotExist();
+      //                   done();
+      //               })
+      //               .catch ( (err) => {
+      //                   done(err);
+      //               });
+      //       });
+      //   });
+
+
+});
+
+//});
