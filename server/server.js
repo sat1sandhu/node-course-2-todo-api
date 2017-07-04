@@ -1,7 +1,7 @@
 /// server.js is now only going to be responsible for our routes
-
-var express      = require('express');
-var bodyParser   = require('body-parser');
+const _          = require('lodash');
+const express    = require('express');
+const bodyParser = require('body-parser');
 
 const {ObjectID} = require('mongodb');
 
@@ -94,6 +94,44 @@ app.delete('/todos/:id', (req, res) => {
         .catch ( (err) => {
             res.status(400).send(err);
         });
+});
+
+
+/// Create a patch route. Patch is what we use to update a resource
+app.patch('/todos/:id', (req, res) => {
+    var id = req.params.id;
+
+    /// We only want user to be able to update some of the properties, not all
+    ///  with pick(), we can specify which properties can be updated by user
+    var body = _.pick(req.body, ['text', 'completed']);
+
+    if (!ObjectID.isValid(id)) {
+        return res.status(404).send();
+    }
+
+    /// Verify that completed is a boolean and is True
+    if (_.isBoolean(body.completed) && body.completed) {
+          /// Return a javaScript timestamp since epoch
+          body.completedAt = new Date().getTime();
+    } else {
+          body.completed = false;
+          body.completedAt = null;
+    }
+
+    //console.log('body = ', body);
+
+    Todo.findByIdAndUpdate (id, {$set: body}, {new: true})
+      .then ( (todo) => {
+          if (!todo) {
+              return res.status(404).send();
+          }
+          //console.log('todo = ', todo);
+          res.send({todo});
+
+      })
+      .catch ( (err) => {
+          res.status(400).send(err);
+      });
 });
 
 
