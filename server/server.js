@@ -1,3 +1,6 @@
+require('./config/config');
+
+
 /// server.js is now only going to be responsible for our routes
 const _          = require('lodash');
 const express    = require('express');
@@ -21,7 +24,8 @@ var app = express();
 /// Add for HEROKU deployment
 /// process.env.PORT will have a value if the app is running on Heroku; it will NOT be set if
 ///   the app is running locally (on localhost). SO we add OR 3000
-const port = process.env.PORT || 3000;
+//const port = process.env.PORT || 3000;
+const port = process.env.PORT;
 
 /// Middleware for bodyParser
 app.use(bodyParser.json());

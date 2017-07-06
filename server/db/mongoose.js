@@ -6,8 +6,8 @@ mongoose.Promise = global.Promise;
 
 /// connect to localhost using mongoose
 //mongoose.connect('mongodb://localhost:27017/TodoAppDB');
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/TodoAppDB');
-
+//mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/TodoAppDB');
+mongoose.connect(process.env.MONGODB_URI);
 
 ///allows mongoose properties and methoods to be used in other files
 module.exports = {
