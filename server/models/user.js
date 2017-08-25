@@ -3,6 +3,7 @@ const mongoose   = require ('mongoose');
 const validator  = require ('validator');
 const jwt        = require ('jsonwebtoken');
 const _          = require ('lodash');
+const bcrypt     = require ('bcryptjs');
 
 var UserSchema = new mongoose.Schema ({
     email: {
@@ -57,7 +58,7 @@ UserSchema.statics.findByToken = function (token) {
     var decoded;
 
     try {
-          decoded = jwt.verify (token, 'abc123');          
+          decoded = jwt.verify (token, 'abc123');
     } catch (e) {
           return Promise.reject();
     }
@@ -68,6 +69,23 @@ UserSchema.statics.findByToken = function (token) {
         'tokens.access': 'auth'
     });
 };
+
+/// Middleware to create a hash for the user's password on signup
+UserSchema.pre ('save', function(next) {
+      var user = this;
+      var password = user.password;
+
+      if ( user.isModified('password')) {
+          bcrypt.genSalt (10, (err, salt) => {
+              bcrypt.hash (password, salt, (err, hash) => {
+                  user.password = hash;
+                  next();
+              });
+          });
+      } else {
+          next();
+      }
+});
 
 /// Create a Mongoose model for user
 var User = mongoose.model('User', UserSchema);
