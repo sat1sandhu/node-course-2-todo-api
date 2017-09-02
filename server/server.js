@@ -34,10 +34,11 @@ app.use(bodyParser.json());
 
 
 /// create a POST route that allows us to create new todos
-app.post('/todos', (req, res) => {
+app.post('/todos', authenticate, (req, res) => {
   //console.log(req.body);
   var todo = new Todo ({
-      text: req.body.text
+      text: req.body.text,
+      _creator: req.user._id
   });
   todo.save()
     .then ( (doc) => {
@@ -49,8 +50,8 @@ app.post('/todos', (req, res) => {
     });
 });
 
-app.get('/todos', (req, res) => {
-    Todo.find()
+app.get('/todos', authenticate, (req, res) => {
+    Todo.find({_creator: req.user._id})
       .then ( (docs) => {
           res.send({docs});
       })
@@ -60,13 +61,16 @@ app.get('/todos', (req, res) => {
 });
 
 
-app.get('/todos/:id', (req,res) => {
+app.get('/todos/:id', authenticate, (req,res) => {
       var id = req.params.id;
       if (!ObjectID.isValid(id)) {
           return res.status(404).send();
       }
 
-      Todo.findById(id)
+      Todo.findOne({
+            _id: id,
+            _creator: req.user._id
+      })
         .then ( (todo) => {
             if (!todo) {
                 return res.status(404).send();
@@ -81,13 +85,16 @@ app.get('/todos/:id', (req,res) => {
 });
 
 
-app.delete('/todos/:id', (req, res) => {
+app.delete('/todos/:id', authenticate, (req, res) => {
       var id = req.params.id;
       if (!ObjectID.isValid(id)) {
           return res.status(404).send();
       };
 
-      Todo.findByIdAndRemove(id)
+      Todo.findOneAndRemove({
+            _id: id,
+            _creator: req.user._id
+      })
         .then ( (todo) => {
             if (!todo) {
                 return res.status(404).send();
@@ -111,7 +118,7 @@ app.delete ('/users/me/token', authenticate, (req, res) => {
 });
 
 /// Create a patch route. Patch is what we use to update a resource
-app.patch('/todos/:id', (req, res) => {
+app.patch('/todos/:id', authenticate, (req, res) => {
     var id = req.params.id;
 
     /// We only want user to be able to update some of the properties, not all
@@ -133,7 +140,11 @@ app.patch('/todos/:id', (req, res) => {
 
     //console.log('body = ', body);
 
-    Todo.findByIdAndUpdate (id, {$set: body}, {new: true})
+    Todo.findOneAndUpdate (
+            { _id:id, _creator: req.user._id }, 
+            {$set: body},
+            {new: true}
+      )
       .then ( (todo) => {
           if (!todo) {
               return res.status(404).send();

@@ -29,6 +29,7 @@ describe('POST /todos', () => {
         request(app)
           .post('/todos')
           .send({text})
+          .set ('x-auth', users[0].tokens[0].token)
           .expect(200)
           .expect( (res) => {
               expect(res.body.text).toBe(text);
@@ -59,6 +60,7 @@ describe('POST /todos', () => {
         request(app)
           .post('/todos')
           .send({text})
+          .set ('x-auth', users[0].tokens[0].token)
           .expect(400)
           .end( (err, res) => {
               if (err) {
@@ -86,9 +88,10 @@ describe ( 'GET /todos', () => {
     it ('Should get all todo documents', (done) => {
           request(app)
             .get('/todos')
+            .set ('x-auth', users[0].tokens[0].token)
             .expect(200)
             .expect ( (res) => {
-                expect(res.body.docs.length).toBe(2);
+                expect(res.body.docs.length).toBe(1);
             })
             .end( done);
     });
@@ -100,6 +103,7 @@ describe ('GET /todos/:id', () => {
     it ('Should return todo doc', (done) => {
           request(app)
             .get(`/todos/${todos[0]._id.toHexString()}`)
+            .set ('x-auth', users[0].tokens[0].token)
             .expect(200)
             .expect( (res) => {
                 expect(res.body.todo.text).toBe(todos[0].text);
@@ -111,6 +115,7 @@ describe ('GET /todos/:id', () => {
           var id = new ObjectID().toHexString();
           request(app)
             .get(`/todos/${id}`)
+            .set ('x-auth', users[0].tokens[0].token)
             .expect(404)
             .end(done)
     });
@@ -119,8 +124,17 @@ describe ('GET /todos/:id', () => {
     it ('Should return 404 for non-object ids', (done) => {
           request(app)
             .get('/todos/123abc')
+            .set ('x-auth', users[0].tokens[0].token)
             .expect(404)
             .end(done)
+    });
+
+    it ('Should not return todo doc created by other user', (done) => {
+          request (app)
+            .get (`/todos/${todos[1]._id.toHexString()}`)
+            .set ('x-auth', users[0].tokens[0].token)
+            .expect (404)
+            .end (done);
     });
 });
 
@@ -129,9 +143,10 @@ describe ('GET /todos/:id', () => {
 describe ('DELETE /todos/:id', () => {
 
     it('Should remove todo document', (done) => {
-        var hexId = todos[0]._id.toHexString();
+        var hexId = todos[1]._id.toHexString();
         request(app)
           .delete(`/todos/${hexId}`)
+          .set ('x-auth', users[1].tokens[0].token)
           .expect(200)
           .expect( (res) => {
               expect(res.body.todo._id).toBe(hexId);
@@ -152,11 +167,11 @@ describe ('DELETE /todos/:id', () => {
           })
     });
 
-
     it('Should return 404 if todo not found', (done) => {
         var id = new ObjectID().toHexString();
         request(app)
           .delete(`/todos/${id}`)
+          .set ('x-auth', users[1].tokens[0].token)
           .expect(404)
           .end(done);
     });
@@ -164,8 +179,29 @@ describe ('DELETE /todos/:id', () => {
     it('Should return 404 for non-object ids', (done) => {
         request(app)
           .delete('/todos/123abc')
+          .set ('x-auth', users[1].tokens[0].token)
           .expect(404)
           .end(done);
+    });
+
+    it ('Should not remove todo doc created by other user', (done) => {
+          var hexId = todos[0]._id.toHexString();
+          request (app)
+            .delete (`/todos/${hexId}`)
+            .set ('x-auth', users[1].tokens[0].token)
+            .expect (404)
+            .end ( (err, res) => {
+                if (err) {
+                    return done(err);
+                }
+
+                Todo.findById (hexId)
+                  .then ( (todo) => {
+                      expect (todo).toExist();
+                      done();
+                  })
+                  .catch ( (err) => done());
+            });
     });
 
 });
@@ -174,58 +210,53 @@ describe ('DELETE /todos/:id', () => {
 
 describe('PATCH /todos/:id', () => {
 
-  it('Should clear completeAt when todo is not completed', (done) => {
-      var hexId = todos[1]._id.toHexString();
+  it('Should update todo document', (done) => {
+      var hexId = todos[0]._id.toHexString();
+      var text  = "This should be the new text";
       request(app)
         .patch(`/todos/${hexId}`)
-        .send({"completed": false})
-        .expect(200)
-        .expect( (res) => {
-            expect(res.body.todo.completed).toBe(false);
-            expect(res.body.todo.comletedAt).toNotExist();
+        .set ('x-auth', users[0].tokens[0].token)
+        .send({
+              "completed": true,
+              text
         })
-        .end ( (err, res) => {
-              if (err) {
-                  return done(err);
-              }
-
-              Todo.findById(hexId)
-                .then ( (todo) => {
-                    expect(todo.completed).toBe(false);
-                    expect(todo.completedAt).toNotExist();
-                    done();
-                })
-                .catch ( (err) => {
-                    done(err);
-                });
-        });
+        .expect(200)
+        .expect ( (res) => {
+          expect (res.body.todo.text).toBe(text);
+          expect (res.body.todo.completed).toBe(true);
+          expect (res.body.todo.completedAt).toBeA('number');
+        })
+        .end (done);
     });
 
+  it('Should clear completeAt when todo is not completed', (done) => {
+      var hexId = todos[1]._id.toHexString();
+      var text  = "This should be the new text";
+      request(app)
+        .patch(`/todos/${hexId}`)
+        .set ('x-auth', users[1].tokens[0].token)
+        .send({
+            "completed": false,
+            text
+        })
+        .expect(200)
+        .expect( (res) => {
+            expect (res.body.todo.text).toBe(text);
+            expect (res.body.todo.completed).toBe(false);
+            expect (res.body.todo.completedAt).toNotExist();
+        })
+        .end (done);
+    });
 
-    it('Should update todo document', (done) => {
-        var hexId = todos[0]._id.toHexString();
-        request(app)
-          .patch(`/todos/${hexId}`)
-          .send({"completed": true})
-          .expect(200)
-          .expect( (res) => {
-            expect( res.body.todo.completed).toBe(true);
-          })
-          .end ( (err, res) => {
-              if (err) {
-                  return done(err);
-              }
+    it('Should not update the todo created by other user', (done) => {
+          var hexId = todos[0]._id.toHexString();
 
-              Todo.findById(hexId)
-                .then ( (todo) => {
-                    expect(todo.completed).toBe(true);
-                    done();
-                })
-                .catch ( (err) => {
-                    done(err);
-                });
-          });
-      });
+          request(app)
+            .patch(`/todos/${hexId}`)
+            .set ('x-auth', users[1].tokens[0].token)
+            .expect(404)
+            .end (done);
+        });
 
 
       // it('Should clear completeAt when todo is not completed', (done) => {
@@ -323,13 +354,7 @@ describe ('POST /users', () => {
               .send ({email, password})
               .expect (400)
               .end (done);
-              // .end ( () => {
-              //     User.findOne ({email})
-              //       .then ( (user) => {
-              //           expect (user).toNotExist();
-              //           done();
-              //       });
-              // });
+
       });
 
 
@@ -341,14 +366,7 @@ describe ('POST /users', () => {
               .post ('/users')
               .send ({email, password})
               .expect (400)
-              .end(done);
-              // .end ( () => {
-              //     User.findOne ({email})
-              //       .then ( (user) => {
-              //             expect (user).toExist();
-              //             done();
-              //       });
-              // });
+              .end(done);//
       });
 });
 
@@ -372,7 +390,7 @@ describe ('POST /users/login', () => {
               User.findById (users[1]._id)
                 .then ( (user) => {
                     //console.log("Test 17: user = ", user);
-                    expect (user.tokens[0]).toInclude ({
+                    expect (user.tokens[1]).toInclude ({
                         access: 'auth',
                         token: res.header['x-auth']
                     });
@@ -401,7 +419,7 @@ describe ('POST /users/login', () => {
               User.findById (users[1]._id)
                 .then ( (user) => {
                     //console.log("Test 18: user =", user);
-                    expect (user.tokens.length).toBe(0);
+                    expect (user.tokens.length).toBe(1);
                     done();
                 })
                 .catch ( (err) => done(err));
@@ -412,7 +430,7 @@ describe ('POST /users/login', () => {
 describe ('DELETE /users/me/token', () => {
     it ('Should remove auth token on logout', (done) => {
         //console.log ("token = ", users[0].tokens[0].token);
-        
+
         request (app)
           .delete ('/users/me/token')
           .set ('x-auth', users[0].tokens[0].token)
@@ -431,5 +449,3 @@ describe ('DELETE /users/me/token', () => {
               });
     });
 });
-
-//});

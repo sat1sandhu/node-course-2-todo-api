@@ -17,7 +17,11 @@ const users = [{
 },{
       _id: userTwoId,
       email: 'jen@example.com',
-      password: 'userTwoPass'
+      password: 'userTwoPass',
+      tokens: [{
+           access: 'auth',
+           token: jwt.sign ({_id: userTwoId, access: 'auth'}, 'abc123').toString()
+      }]
 }];
 
 /// When running POST /todos, we remove all todos documents. This is not good for the GET /todos,
@@ -25,12 +29,14 @@ const users = [{
 ///  test
 const todos = [{
     _id: new ObjectID(),
-    text: "First test todos document"
+    text: "First test todos document",
+    _creator: userOneId
 },{
     _id: new ObjectID(),
     text: "Second test todos document",
     completed: true,
-    completedAt: 987654
+    completedAt: 987654,
+    _creator: userTwoId
 }];
 
 const populateTodos = (done) => {
