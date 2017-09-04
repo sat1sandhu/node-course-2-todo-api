@@ -3,13 +3,11 @@
 /// Heroku or the test script, the NODE_ENV has no value, so env = 'production'
 var env  = process.env.NODE_ENV || 'development';
 
-console.log("****** env = ", env);
+if (env === 'development' || env === 'test') {
+    var config = require ('./config.json');
+    var envConfig = config[env];
 
-
-if (env === 'development') {
-    process.env.PORT = 3000;
-    process.env.MONGODB_URI = 'mongodb://localhost:27017/TodoAppDB';      //dBase for development
-} else if (env === 'test') {
-    process.env.PORT = 3000;
-    process.env.MONGODB_URI = 'mongodb://localhost:27017/TodoAppTestDB';  //dBase for test
+    Object.keys(envConfig).forEach ( (key) => {
+        process.env[key] = envConfig[key];
+    });
 }

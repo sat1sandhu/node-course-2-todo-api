@@ -217,7 +217,7 @@ describe('PATCH /todos/:id', () => {
         .patch(`/todos/${hexId}`)
         .set ('x-auth', users[0].tokens[0].token)
         .send({
-              "completed": true,
+              completed: true,
               text
         })
         .expect(200)
@@ -236,7 +236,7 @@ describe('PATCH /todos/:id', () => {
         .patch(`/todos/${hexId}`)
         .set ('x-auth', users[1].tokens[0].token)
         .send({
-            "completed": false,
+            completed: false,
             text
         })
         .expect(200)
